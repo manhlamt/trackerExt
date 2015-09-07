@@ -1,0 +1,58 @@
+{
+    "manifest_version": 2,
+
+    "name": "Track the tracker",
+    "description": "Debug tracking script easily, everywhere.",
+    "version": "0.1",
+    "icons": { "16": "cookie.png", "48": "cookie.png", "128": "cookie.png" },
+
+    "content_scripts": [
+        {
+            "matches": [
+                "http://brand-display.s3.amazonaws.com/*",
+                "http://star-micro.knorex.asia/*",
+                "http://star-big.knorex.asia/*",
+                "http://nation-static.s3.amazonaws.com/*",
+                "http://bd-demo.s3.amazonaws.com/*",
+                "http://brand-display-test.s3.amazonaws.com/*"
+            ],
+            "js": ["components/content_scripts/bd_injector.js"],
+            "all_frames": true
+        }
+    ],
+
+    "background": {
+        "scripts": [
+            "/assets/js/request/request.js",
+            "/assets/js/request/query_form.js",
+            "/assets/js/indexedDB/db.js",
+            "/components/background/background.js"
+        ]
+    },
+
+    "page_action": {
+        "default_name": "Debuger",
+        "default_icon": "cookie.png"
+    },
+
+    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
+
+    "permissions": [
+        "activeTab",
+        "tabs",
+        "webRequest",
+        "http://www.bangkokbiznews.com/*",
+        "http://www.todayonline.com/*",
+        "http://www.thestar.com.my/*",
+        "http://nation-tracking.knorex.asia/*",
+        "http://star-tracking.knorex.asia/*",
+        "http://brand-display.com/*",
+        "http://demo.brand-display.com/*",
+        "http://track.knorex.asia/*",
+        "http://brand-display.s3.amazonaws.com/*",
+        "http://star-micro.knorex.asia/*"
+    ],
+    "web_accessible_resources": [
+        "components/content_scripts/bd.js"
+    ]
+}

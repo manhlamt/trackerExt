@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="monitor">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Track the tracker</title>
+    <link rel="stylesheet" href="../../assets/lib/bootstrap/bootstrap.css">
+    <link rel="stylesheet" href="monitor.css">
+
+</head>
+<body>
+    <div id="wrapper" ng-controller="MonitorCtrl">
+        <form>
+            <div class="input-group input-group-sm">
+                <label for="bdId" class="input-group-addon">Select Ads</label>
+                <select id="bdId" ng-model="bdId" class="form-control" ng-change="selectBD()">
+                    <option value="{{bd}}" ng-repeat="bd in getBDList()">{{bd}}</option>
+                </select>
+
+            </div>
+            <div class="input-group input-group-sm">
+                <label for="searchTerm" class="input-group-addon">Search</label>
+                <input id="searchTerm" ng-model="searchTerm" class="form-control" type="text">
+                <span class="input-group-btn">
+                    <button class="btn btn-default" type="button" ng-click="lightSwitch()">
+                        <span class="glyphicon glyphicon-eye-open" ></span>
+                    </button>
+                    <button class="btn btn-default" type="button" ng-click="scrollTo()">
+                        <span class="glyphicon glyphicon-screenshot"></span>
+                    </button>
+                </span>
+            </div>
+        </form>
+        <div style="position: relative">
+            <ul class="nav nav-tabs">
+                <li class="active"><a href="#requests" data-toggle="tab" ng-click="switchTab($event)">Requests <span class="badge">{{bdList[bdId]}}</span></a></li>
+                <li><a href="#interactions" data-toggle="tab" ng-click="switchTab($event)">Interactions</a></li>
+                <li><a href="#nodes" data-toggle="tab" ng-click="switchTab($event)">Nodes</a></li>
+            </ul>
+            <span class="glyphicon glyphicon-warning-sign fail-sign" ng-if="failList[bdId]"></span>
+        </div>
+        <!--<input type="hidden" ng-model="orderBy">-->
+        <!-- Tab panes -->
+        <div class="tab-content">
+            <div class="tab-pane active" id="requests">
+                <ul id="request-list" class="list-group">
+                    <li ng-class="{'fail': !request.valid, detail: isDetailShown(request.id), 'list-group-item': true, 'request-item': true, 'pageview': isPageView(request)}"
+                        ng-repeat="request in requests | filter: {'bdId': bdId, $: searchTerm} | orderBy: orderProp : true"
+                        ng-switch="isPageView(request)">
+                        <div class="request-item-menu">
+                            <span ng-click="showDetail(request.id)" ng-class="{glyphicon: true, 'glyphicon-chevron-down': !isDetailShown(request.id), 'glyphicon-chevron-up': isDetailShown(request.id)}"></span></div>
+                        <div class="request-item-header" ng-switch-when="true" ng-click="showDetail(request.id)">
+                            <span class="label label-default request-item-index">{{$index + 1}}</span>
+                            <span class="text-primary">{{request.queryForm.browser}}</span>
+                            <span class="text-danger">{{request.queryForm.version}}</span>
+                        </div>
+                        <div class="request-item-header" ng-switch-when="false" ng-click="showDetail(request.id)">
+                            <span class="label label-default request-item-index">{{$index + 1}}</span>
+                            <span class="text-primary">{{request.queryForm.trigger}}</span>
+                            <span class="text-success">{{request.queryForm.object}}</span>
+                            <span class="text-danger">{{request.queryForm.response}}</span>
+                        </div>
+                        <div class="request-item-detail container-fluid" ng-switch-when="true" ng-dblclick="showDetail(request.id)">
+                            <div class="row"><strong class="col-md-1">Browser: </strong><span class="col-md-1">{{request.queryForm.browser}}</span></div>
+                            <div class="row"><strong class="col-md-1">Version: </strong><span class="col-md-1">{{request.queryForm.version}}</span></div>
+                            <div class="row"><strong class="col-md-1">Referrer: </strong><span class="col-md-1">{{request.queryForm.referer}}</span></div>
+                        </div>
+                        <div class="request-item-detail" ng-switch-when="false" ng-dblclick="showDetail(request.id)">
+                            <div class="row"><strong class="col-md-1">Trigger: </strong><span class="col-md-1" title="{{request.queryForm.trigger}}">{{request.queryForm.trigger}}</span></div>
+                            <div class="row"><strong class="col-md-1">Object: </strong><span class="col-md-1" title="{{request.queryForm.object}}">{{request.queryForm.object}}</span></div>
+                            <div class="row"><strong class="col-md-1">Response: </strong><span class="col-md-1" title="{{request.queryForm.response}}">{{request.queryForm.response}}</span></div>
+                            <div class="row"><strong class="col-md-1">Referrer: </strong><span class="col-md-1" title="{{request.queryForm.referer}}">{{request.queryForm.referer}}</span></div>
+                            <div class="row"><strong class="col-md-1">Extra: </strong><span class="col-md-1" title="{{request.queryForm.extra}}">{{request.queryForm.extra}}</span></div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="tab-pane" id="interactions">
+                <table class="table-responsive table-striped table-condensed table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Trigger</th>
+                            <th>Object</th>
+                            <th>Interaction</th>
+                        </tr>
+                    </thead>
+                    <tr ng-class="{fail: !interaction.valid, 'interaction-item': true}"
+                            ng-repeat="interaction in interactions | filter: {'bdId': bdId, $: searchTerm} | orderBy: 'object'">
+                        <td>{{$index + 1}}</td>
+                        <td>{{interaction.trigger}}</td>
+                        <td>{{interaction.object}}</td>
+                        <td>{{interaction.response}}</td>
+                    </tr>
+                </table>
+            </div>
+            <div id="nodes" class="tab-pane">
+                <table class="table-responsive table-striped table-condensed table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Tag</th>
+                            <th>Selector</th>
+                            <th>Interact</th>
+                        </tr>
+                    </thead>
+                    <tr ng-repeat="node in nodes" >
+                        <td>{{$index + 1}}</td>
+                        <td>{{node.tagName}}</td>
+                        <td>{{node.tagName + (node.id ? "#" + node.id : node.class + (node.dataObject ? "[" + node.dataObject + "]" : "" ) ) }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <div class="btn-group" title="Trigger Events">
+                                    <button type="button" class="btn btn-default dropdown-toggle btn-xs" data-toggle="dropdown">
+                                        <span class="glyphicon glyphicon-flash"></span>
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu pull-right" role="menu">
+                                        <li ng-repeat="event in node.listener"><a href="#" ng-click="triggerEventOnNode(event, $parent.$index)">{{event}}</a></li>
+                                    </ul>
+                                </div>
+                                <button type="button" class="btn btn-default btn-xs"  title="Outline" ng-click="outlineNode($index)"><span class="glyphicon glyphicon-unchecked"></span></button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr ng-if="nodes.length <= 0">
+                        <td colspan="4">Refresh to see node list</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript" src="../../assets/lib/jquery/jquery.js"></script>
+<script type="text/javascript" src="../../assets/lib/angular/angular.js"></script>
+<script type="text/javascript" src="../../assets/lib/angular-animate/angular-animate.js"></script>
+<script type="text/javascript" src="../../assets/lib/bootstrap/bootstrap.js"></script>
+<script type="text/javascript" src="../../assets/lib/db.js/db.js"></script>
+<script type="text/javascript" src="monitor.js"></script>
+<script type="text/javascript" src="./controllers/controller.js"></script>
+<script type="text/javascript" src="./controllers/services.js"></script>
+</html>
